@@ -1771,7 +1771,7 @@ parseQuery(query) {
                     
                     // Highlight search terms in title and snippet
 // Fix: Use the actual search terms for highlighting
-const searchTerms = parsedQuery.type === 'text' ? parsedQuery.terms : [];
+const searchTerms = this.search.extractKeywords(query);
 const highlightedTitle = this.search.highlightText(result.title, searchTerms);
 const highlightedSnippet = this.search.highlightText(this.createSnippet(result.text, 150), searchTerms);
                     
