@@ -1770,8 +1770,10 @@ parseQuery(query) {
                     const resultClass = result.code === 'PK' ? 'pk-result' : 'kpd-result';
                     
                     // Highlight search terms in title and snippet
-                    const highlightedTitle = this.search.highlightText(result.title, this.search.currentSearchTerms);
-                    const highlightedSnippet = this.search.highlightText(this.createSnippet(result.text, 150), this.search.currentSearchTerms);
+// Fix: Use the actual search terms for highlighting
+const searchTerms = parsedQuery.type === 'text' ? parsedQuery.terms : [];
+const highlightedTitle = this.search.highlightText(result.title, searchTerms);
+const highlightedSnippet = this.search.highlightText(this.createSnippet(result.text, 150), searchTerms);
                     
                     html += `
                         <div class="result-item ${resultClass}" onclick="app.showArticle('${result.article}', '${result.code}', ${result.paragraph || 'null'})">
