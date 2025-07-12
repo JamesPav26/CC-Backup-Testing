@@ -65,10 +65,21 @@
         .header-controls {
             position: absolute;
             top: 15px;
+            left: 20px;
             right: 20px;
             display: flex;
-            gap: 10px;
+            justify-content: space-between;
             align-items: center;
+        }
+
+        .header-controls-left {
+            display: flex;
+            gap: 10px;
+        }
+
+        .header-controls-right {
+            display: flex;
+            gap: 10px;
         }
 
         .control-btn {
@@ -223,6 +234,12 @@
             transform: translateY(-2px);
         }
 
+        .code-btn.highlighted {
+            background: #e8f4f8;
+            border-color: #3498db;
+            box-shadow: 0 2px 8px rgba(52, 152, 219, 0.2);
+        }
+
         .code-btn .icon {
             font-size: 24px;
             margin-bottom: 8px;
@@ -322,13 +339,13 @@
         }
 
         .result-item.pk-result {
-            border-left-color: #e74c3c;
-            border: 2px solid #e74c3c;
+            border-left-color: #bdc3c7;
+            border: 2px solid #bdc3c7;
         }
 
         .result-item.kpd-result {
-            border-left-color: #3498db;
-            border: 2px solid #3498db;
+            border-left-color: #bdc3c7;
+            border: 2px solid #bdc3c7;
         }
 
         .result-item:hover {
@@ -566,13 +583,13 @@
         }
 
         .article-list-item.pk-item {
-            border: 2px solid #e74c3c;
-            border-left: 4px solid #e74c3c;
+            border: 2px solid #bdc3c7;
+            border-left: 4px solid #bdc3c7;
         }
 
         .article-list-item.kpd-item {
-            border: 2px solid #3498db;
-            border-left: 4px solid #3498db;
+            border: 2px solid #bdc3c7;
+            border-left: 4px solid #bdc3c7;
         }
 
         .article-list-item:hover {
@@ -980,12 +997,19 @@
     <div class="container">
         <header class="header" onclick="app.goHome()">
             <div class="header-controls">
-                <button class="control-btn" id="soundToggle" onclick="app.toggleSound(event)" title="Ήχοι Εφαρμογής">
-                    🔊
-                </button>
-                <button class="control-btn" onclick="app.showInfoModal(event)" title="Πληροφορίες Εφαρμογής">
-                    ℹ️
-                </button>
+                <div class="header-controls-left">
+                    <button class="control-btn" id="soundToggle" onclick="app.toggleSound(event)" title="Ήχοι Εφαρμογής">
+                        🔊
+                    </button>
+                </div>
+                <div class="header-controls-right">
+                    <button class="control-btn" onclick="app.toggleGlobalFullscreen(event)" title="Πλήρης οθόνη εφαρμογής">
+                        📖
+                    </button>
+                    <button class="control-btn" onclick="app.showInfoModal(event)" title="Πληροφορίες Εφαρμογής">
+                        ℹ️
+                    </button>
+                </div>
             </div>
             <h1>⚖️ Codex Criminalis</h1>
             <div class="subtitle">Ποινικός Κώδικας & Κώδικας Ποινικής Δικονομίας</div>
@@ -1319,7 +1343,7 @@
                 return true;
             }
 
-            async playSound(type, volume = 0.2, duration = 0.1) {
+            async playSound(type, volume = 0.1, duration = 0.05) {
                 if (!this.enabled) return;
                 
                 if (!await this.initAudioContext()) return;
@@ -1331,14 +1355,14 @@
                     oscillator.connect(gainNode);
                     gainNode.connect(this.audioContext.destination);
                     
-                    // Sound configurations
+                    // Subtle keyboard-like tap sounds
                     const sounds = {
                         'click': { frequency: 800, type: 'sine' },
                         'navigation': { frequency: 600, type: 'sine' },
-                        'search': { frequency: 1000, type: 'triangle' },
+                        'search': { frequency: 1000, type: 'sine' },
                         'success': { frequency: 880, type: 'sine' },
-                        'bookmark': { frequency: 1200, type: 'square' },
-                        'error': { frequency: 300, type: 'sawtooth' }
+                        'bookmark': { frequency: 1200, type: 'sine' },
+                        'error': { frequency: 300, type: 'sine' }
                     };
                     
                     const config = sounds[type] || sounds['click'];
@@ -1595,6 +1619,11 @@
                     btn.addEventListener('click', (e) => {
                         e.preventDefault();
                         this.sound.playSound('navigation');
+                        
+                        // Add highlight effect
+                        document.querySelectorAll('.code-btn').forEach(b => b.classList.remove('highlighted'));
+                        btn.classList.add('highlighted');
+                        
                         this.showBrowse(e.target.closest('[data-code]').dataset.code);
                     });
                 });
@@ -1612,7 +1641,25 @@
 
             goHome() {
                 this.sound.playSound('navigation');
+                // Remove browse button highlights when going home
+                document.querySelectorAll('.code-btn').forEach(btn => btn.classList.remove('highlighted'));
                 this.showSection('home');
+            }
+
+            toggleGlobalFullscreen(event) {
+                event.stopPropagation(); // Prevent header click
+                this.sound.playSound('click');
+                
+                if (!document.fullscreenElement) {
+                    // Enter fullscreen
+                    document.documentElement.requestFullscreen().catch(err => {
+                        console.log('Fullscreen not supported:', err);
+                        this.showToast('Fullscreen δεν υποστηρίζεται από τον browser');
+                    });
+                } else {
+                    // Exit fullscreen
+                    document.exitFullscreen();
+                }
             }
 
             toggleSound(event) {
