@@ -1428,35 +1428,58 @@
                     .filter(word => word.length > 2);
             }
 
-            parseQuery(query) {
-                query = query.trim();
-                
-                // Check if it's an article number search
-                const articleMatch = query.match(/^(\d+)([αβγδΑΒΓΔ]?)\.?(\d+)?$/i);
-                if (articleMatch) {
-                    return {
-                        type: 'article',
-                        number: articleMatch[1] + (articleMatch[2] || ''),
-                        paragraph: articleMatch[3] ? parseInt(articleMatch[3]) : null
-                    };
-                }
+parseQuery(query) {
+    query = query.trim();
+    
+    // Enhanced Greek letter support - MAIN FIX
+    const articleMatch = query.match(/^(\d+)([αβγδΑΒΓΔabcdABCD]?)\.?(\d+)?$/i);
+    if (articleMatch) {
+        let letter = articleMatch[2];
+        // Normalize Greek and Latin letters to uppercase Latin
+        if (letter) {
+            const letterMap = {
+                'α': 'A', 'Α': 'A', 'a': 'A', 'A': 'A',
+                'β': 'B', 'Β': 'B', 'b': 'B', 'B': 'B',
+                'γ': 'C', 'Γ': 'C', 'c': 'C', 'C': 'C',
+                'δ': 'D', 'Δ': 'D', 'd': 'D', 'D': 'D'
+            };
+            letter = letterMap[letter] || letter.toUpperCase();
+        }
+        
+        return {
+            type: 'article',
+            number: articleMatch[1] + (letter || ''),
+            paragraph: articleMatch[3] ? parseInt(articleMatch[3]) : null
+        };
+    }
 
-                // Check for "άρθρο X" format
-                const articleWordMatch = query.match(/άρθρο\s*(\d+)([αβγδΑΒΓΔ]?)/i);
-                if (articleWordMatch) {
-                    return {
-                        type: 'article',
-                        number: articleWordMatch[1] + (articleWordMatch[2] || ''),
-                        paragraph: null
-                    };
-                }
+    // Check for "άρθρο X" format with Greek letter support
+    const articleWordMatch = query.match(/άρθρο\s*(\d+)([αβγδΑΒΓΔabcdABCD]?)/i);
+    if (articleWordMatch) {
+        let letter = articleWordMatch[2];
+        if (letter) {
+            const letterMap = {
+                'α': 'A', 'Α': 'A', 'a': 'A', 'A': 'A',
+                'β': 'B', 'Β': 'B', 'b': 'B', 'B': 'B',
+                'γ': 'C', 'Γ': 'C', 'c': 'C', 'C': 'C',
+                'δ': 'D', 'Δ': 'D', 'd': 'D', 'D': 'D'
+            };
+            letter = letterMap[letter] || letter.toUpperCase();
+        }
+        
+        return {
+            type: 'article',
+            number: articleWordMatch[1] + (letter || ''),
+            paragraph: null
+        };
+    }
 
-                // Text search
-                return {
-                    type: 'text',
-                    terms: this.extractKeywords(query)
-                };
-            }
+    // Text search
+    return {
+        type: 'text',
+        terms: this.extractKeywords(query)
+    };
+}
 
             search(query, mode = 'quick') {
                 const parsedQuery = this.parseQuery(query);
